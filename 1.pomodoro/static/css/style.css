@@ -271,7 +271,7 @@ body {
   border: 1px solid #d6d8ee;
   border-radius: 8px;
   padding: 6px 8px;
-  background: #fff;
+  background: var(--card-bg);
   color: var(--text-color);
 }
 

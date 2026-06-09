@@ -141,8 +141,8 @@ function loadSettings() {
   try {
     const parsed = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
     userSettings = {
-      work_duration_minutes: clampWorkDuration(Number(parsed.work_duration_minutes)),
-      break_duration_minutes: clampBreakDuration(Number(parsed.break_duration_minutes)),
+      work_duration_minutes: clampWorkDuration(Number(parsed.work_duration_minutes) || 25),
+      break_duration_minutes: clampBreakDuration(Number(parsed.break_duration_minutes) || 5),
       theme: ['light', 'dark', 'focus'].includes(parsed.theme) ? parsed.theme : 'light',
       sounds: {
         start: parsed.sounds?.start !== false,
@@ -174,11 +174,17 @@ function syncSettingsControls() {
 }
 
 async function syncTimerSettings() {
-  const res = await apiPost('/api/settings', {
-    work_duration_minutes: userSettings.work_duration_minutes,
-    break_duration_minutes: userSettings.break_duration_minutes,
-  });
-  updateUI(res.timer);
+  try {
+    const res = await apiPost('/api/settings', {
+      work_duration_minutes: userSettings.work_duration_minutes,
+      break_duration_minutes: userSettings.break_duration_minutes,
+    });
+    if (!res?.timer) throw new Error('settings sync failed');
+    updateUI(res.timer);
+  } catch (err) {
+    console.error('設定の同期に失敗しました:', err);
+    await fetchState();
+  }
 }
 
 // ============================================================
@@ -199,8 +205,9 @@ function playTones(tones) {
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + dur + 0.05);
     });
-  } catch (_) {
+  } catch (err) {
     // Web Audio 非対応環境では無視
+    console.warn('サウンド再生に失敗しました:', err);
   }
 }
 

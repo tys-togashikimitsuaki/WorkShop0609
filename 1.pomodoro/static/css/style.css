@@ -8,9 +8,17 @@
   padding: 0;
 }
 
+:root {
+  --bg-color: #6B63D5;
+  --card-bg: #fff;
+  --text-color: #2d2d3a;
+  --panel-bg: #EEF0FF;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  background-color: #6B63D5;
+  background-color: var(--bg-color);
+  color: var(--text-color);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -31,7 +39,7 @@ body {
    ============================================================ */
 
 .titlebar {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 20px 20px 0 0;
   padding: 12px 20px;
   display: flex;
@@ -43,7 +51,7 @@ body {
 .titlebar-title {
   font-size: 15px;
   font-weight: 600;
-  color: #2d2d3a;
+  color: var(--text-color);
 }
 
 .titlebar-controls {
@@ -76,7 +84,7 @@ body {
    ============================================================ */
 
 .card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 0 0 20px 20px;
   padding: 32px 28px 28px;
   display: flex;
@@ -108,6 +116,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .ring-svg {
@@ -124,13 +133,71 @@ body {
 
 .ring-progress {
   stroke: #6B63D5;
-  transition: stroke-dashoffset 0.5s linear;
+  transition: stroke-dashoffset 0.9s linear, stroke 0.45s ease;
+}
+
+.focus-effects {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.card.focus-mode .focus-effects {
+  opacity: 1;
+}
+
+.particle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.32);
+  animation: particleDrift 4s ease-in-out infinite;
+}
+
+.particle-1 { top: 10%; left: 12%; animation-delay: 0s; }
+.particle-2 { top: 20%; right: 16%; animation-delay: 1s; }
+.particle-3 { bottom: 12%; left: 18%; animation-delay: 1.8s; }
+.particle-4 { bottom: 18%; right: 10%; animation-delay: 2.6s; }
+
+.ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  transform: translate(-50%, -50%) scale(0.85);
+  animation: ripplePulse 3.2s ease-out infinite;
+}
+
+.ripple-2 {
+  animation-delay: 1.6s;
+}
+
+@keyframes particleDrift {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+  50% { transform: translateY(-12px) scale(1.25); opacity: 0.7; }
+}
+
+@keyframes ripplePulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 0;
+  }
 }
 
 .time-display {
   font-size: 48px;
   font-weight: 700;
-  color: #2d2d3a;
+  color: var(--text-color);
   letter-spacing: -1px;
   z-index: 1;
 }
@@ -187,7 +254,7 @@ body {
 
 .stats-panel {
   width: 100%;
-  background: #EEF0FF;
+  background: var(--panel-bg);
   border-radius: 14px;
   padding: 18px 24px;
 }
@@ -221,7 +288,7 @@ body {
 .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: #2d2d3a;
+  color: var(--text-color);
   line-height: 1;
 }
 
@@ -305,6 +372,80 @@ body {
   background: #5E56C8;
   border-radius: 999px;
   transition: width 0.3s ease;
+}
+
+/* ============================================================
+   設定パネル
+   ============================================================ */
+
+.settings-panel {
+  width: 100%;
+  background: var(--panel-bg);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.settings-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.setting-item select {
+  border: 1px solid #d6d8ee;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: var(--card-bg);
+  color: var(--text-color);
+}
+
+.sound-settings {
+  margin-top: 12px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #666;
+}
+
+.sound-settings label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.theme-dark {
+  --bg-color: #12121b;
+  --card-bg: #1d1d2a;
+  --text-color: #f3f3f7;
+  --panel-bg: #29293a;
+}
+
+body.theme-focus {
+  --bg-color: #111418;
+  --card-bg: #f7f7f7;
+  --text-color: #1f2328;
+  --panel-bg: #ececec;
+}
+
+body.theme-dark .titlebar,
+body.theme-dark .card {
+  border-color: #343447;
 }
 
 /* ============================================================

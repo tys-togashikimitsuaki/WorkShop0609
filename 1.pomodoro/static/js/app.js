@@ -14,6 +14,9 @@
 // ============================================================
 const RING_RADIUS = 96;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS; // ≈ 603.2
+const WORK_RING_COLOR_BLUE = [59, 130, 246];
+const WORK_RING_COLOR_YELLOW = [250, 204, 21];
+const WORK_RING_COLOR_RED = [239, 68, 68];
 
 // ============================================================
 // DOM 参照
@@ -21,6 +24,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS; // ≈ 603.2
 const statusLabel    = document.getElementById('statusLabel');
 const timeDisplay    = document.getElementById('timeDisplay');
 const ringProgress   = document.getElementById('ringProgress');
+const timerCard      = document.getElementById('timerCard');
 const startPauseBtn  = document.getElementById('startPauseBtn');
 const resetBtn       = document.getElementById('resetBtn');
 const completedCount = document.getElementById('completedCount');
@@ -35,6 +39,12 @@ const weeklyAvg      = document.getElementById('weeklyAvg');
 const monthlyRate    = document.getElementById('monthlyRate');
 const monthlyRateFill = document.getElementById('monthlyRateFill');
 const monthlyAvg     = document.getElementById('monthlyAvg');
+const workDurationSelect = document.getElementById('workDurationSelect');
+const breakDurationSelect = document.getElementById('breakDurationSelect');
+const themeSelect = document.getElementById('themeSelect');
+const soundStartToggle = document.getElementById('soundStartToggle');
+const soundEndToggle = document.getElementById('soundEndToggle');
+const soundTickToggle = document.getElementById('soundTickToggle');
 
 // ============================================================
 // 状態
@@ -49,6 +59,17 @@ let timerState = {
 let intervalId = null;
 let sessionStartTime = null; // セッション開始時刻（経過時間計算用）
 let isCompletingSession = false; // handleSessionComplete の再入防止フラグ
+const SETTINGS_STORAGE_KEY = 'pomodoro.preferences.v1';
+let userSettings = {
+  work_duration_minutes: 25,
+  break_duration_minutes: 5,
+  theme: 'light',
+  sounds: {
+    start: true,
+    end: true,
+    tick: false,
+  },
+};
 
 // ============================================================
 // リング初期化
@@ -59,6 +80,27 @@ ringProgress.style.strokeDashoffset = 0;
 // ============================================================
 // UI 更新
 // ============================================================
+function interpolateColor(from, to, t) {
+  return from.map((value, i) => Math.round(value + (to[i] - value) * t));
+}
+
+function getWorkRingColor(progress) {
+  const clamped = Math.max(0, Math.min(1, progress));
+
+  const rgb = clamped <= 0.5
+    ? interpolateColor(WORK_RING_COLOR_BLUE, WORK_RING_COLOR_YELLOW, clamped * 2)
+    : interpolateColor(WORK_RING_COLOR_YELLOW, WORK_RING_COLOR_RED, (clamped - 0.5) * 2);
+
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+}
+
+function updateRingVisuals(remainingSeconds, totalDuration, mode) {
+  const ratio = totalDuration > 0 ? remainingSeconds / totalDuration : 0;
+  const progress = 1 - ratio;
+  ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * progress;
+  ringProgress.style.stroke = mode === 'work' ? getWorkRingColor(progress) : '#56C8A0';
+}
+
 function updateUI(data) {
   timerState = data;
 
@@ -70,14 +112,8 @@ function updateUI(data) {
   // ステータスラベル
   statusLabel.textContent = data.mode === 'work' ? '作業中' : '休憩中';
 
-  // リングカラー（作業:パープル / 休憩:グリーン系）
-  ringProgress.style.stroke = data.mode === 'work' ? '#6B63D5' : '#56C8A0';
-
-  // リング進捗
-  const ratio = data.total_duration > 0
-    ? data.remaining_seconds / data.total_duration
-    : 0;
-  ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - ratio);
+  updateRingVisuals(data.remaining_seconds, data.total_duration, data.mode);
+  timerCard.classList.toggle('focus-mode', data.mode === 'work' && data.state === 'running');
 
   // ボタンラベル
   if (data.state === 'running') {
@@ -139,31 +175,110 @@ async function fetchStats() {
 }
 
 // ============================================================
+// 設定
+// ============================================================
+function clampWorkDuration(value) {
+  const allowed = [15, 25, 35, 45];
+  return allowed.includes(value) ? value : 25;
+}
+
+function clampBreakDuration(value) {
+  const allowed = [5, 10, 15];
+  return allowed.includes(value) ? value : 5;
+}
+
+function loadSettings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
+    userSettings = {
+      work_duration_minutes: clampWorkDuration(Number(parsed.work_duration_minutes) || 25),
+      break_duration_minutes: clampBreakDuration(Number(parsed.break_duration_minutes) || 5),
+      theme: ['light', 'dark', 'focus'].includes(parsed.theme) ? parsed.theme : 'light',
+      sounds: {
+        start: parsed.sounds?.start !== false,
+        end: parsed.sounds?.end !== false,
+        tick: parsed.sounds?.tick === true,
+      },
+    };
+  } catch (err) {
+    // 破損時はデフォルト値を使用
+    console.warn('保存済み設定の読み込みに失敗しました:', err);
+  }
+}
+
+function saveSettings() {
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(userSettings));
+}
+
+function applyTheme(theme) {
+  document.body.classList.remove('theme-light', 'theme-dark', 'theme-focus');
+  document.body.classList.add(`theme-${theme}`);
+}
+
+function syncSettingsControls() {
+  workDurationSelect.value = String(userSettings.work_duration_minutes);
+  breakDurationSelect.value = String(userSettings.break_duration_minutes);
+  themeSelect.value = userSettings.theme;
+  soundStartToggle.checked = userSettings.sounds.start;
+  soundEndToggle.checked = userSettings.sounds.end;
+  soundTickToggle.checked = userSettings.sounds.tick;
+}
+
+async function syncTimerSettings() {
+  try {
+    const res = await apiPost('/api/settings', {
+      work_duration_minutes: userSettings.work_duration_minutes,
+      break_duration_minutes: userSettings.break_duration_minutes,
+    });
+    if (!res?.timer) throw new Error('settings sync failed');
+    updateUI(res.timer);
+  } catch (err) {
+    console.error('設定の同期に失敗しました:', err);
+    await fetchState();
+  }
+}
+
+// ============================================================
 // サウンド通知（Web Audio API — 外部ファイル不要）
 // ============================================================
-function playNotificationSound() {
+function playTones(tones) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const beepSequence = [
-      { freq: 880, start: 0,    dur: 0.12 },
-      { freq: 880, start: 0.18, dur: 0.12 },
-      { freq: 1100, start: 0.36, dur: 0.25 },
-    ];
-    beepSequence.forEach(({ freq, start, dur }) => {
+    tones.forEach(({ freq, start, dur, gain = 0.4 }) => {
       const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      const gainNode = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      gainNode.gain.setValueAtTime(gain, ctx.currentTime + start);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + dur + 0.05);
     });
-  } catch (_) {
-    // Web Audio 非対応環境では無視
+  } catch (err) {
+    // Web Audio 非対応環境や再生失敗時は警告のみ出して継続する
+    console.warn('サウンド再生に失敗しました:', err);
   }
+}
+
+function playStartSound() {
+  if (!userSettings.sounds.start) return;
+  playTones([{ freq: 740, start: 0, dur: 0.12 }]);
+}
+
+function playEndSound() {
+  if (!userSettings.sounds.end) return;
+  playTones([
+    { freq: 880, start: 0, dur: 0.12 },
+    { freq: 880, start: 0.18, dur: 0.12 },
+    { freq: 1100, start: 0.36, dur: 0.25 },
+  ]);
+}
+
+function playTickSound() {
+  if (!userSettings.sounds.tick) return;
+  playTones([{ freq: 660, start: 0, dur: 0.04, gain: 0.1 }]);
 }
 
 // ============================================================
@@ -198,7 +313,7 @@ async function handleSessionComplete() {
       : (timerState.total_duration - timerState.remaining_seconds);
     sessionStartTime = null;
 
-    playNotificationSound();
+    playEndSound();
 
     const wasWork = timerState.mode === 'work';
     const data = await apiPost('/api/complete', { duration_seconds: durationSeconds });
@@ -206,7 +321,7 @@ async function handleSessionComplete() {
     await fetchStats();
 
     if (wasWork) {
-      showNotification('作業完了！', '5分間の休憩を取りましょう。');
+      showNotification('作業完了！', `${userSettings.break_duration_minutes}分間の休憩を取りましょう。`);
     } else {
       showNotification('休憩終了！', '次の作業セッションを始めましょう。');
     }
@@ -238,14 +353,12 @@ function tick() {
     return;
   }
   timerState.remaining_seconds -= 1;
+  playTickSound();
   const m = Math.floor(timerState.remaining_seconds / 60);
   const s = timerState.remaining_seconds % 60;
   timeDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-  const ratio = timerState.total_duration > 0
-    ? timerState.remaining_seconds / timerState.total_duration
-    : 0;
-  ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - ratio);
+  updateRingVisuals(timerState.remaining_seconds, timerState.total_duration, timerState.mode);
 }
 
 // ============================================================
@@ -261,6 +374,7 @@ startPauseBtn.addEventListener('click', async () => {
   } else {
     // 開始 or 再開
     requestNotificationPermission();
+    playStartSound();
     const data = await apiPost('/api/start');
     updateUI(data);
     if (sessionStartTime === null) {
@@ -279,10 +393,46 @@ resetBtn.addEventListener('click', async () => {
   updateUI(data);
 });
 
+workDurationSelect.addEventListener('change', async () => {
+  userSettings.work_duration_minutes = clampWorkDuration(Number(workDurationSelect.value));
+  saveSettings();
+  await syncTimerSettings();
+});
+
+breakDurationSelect.addEventListener('change', async () => {
+  userSettings.break_duration_minutes = clampBreakDuration(Number(breakDurationSelect.value));
+  saveSettings();
+  await syncTimerSettings();
+});
+
+themeSelect.addEventListener('change', () => {
+  userSettings.theme = ['light', 'dark', 'focus'].includes(themeSelect.value) ? themeSelect.value : 'light';
+  applyTheme(userSettings.theme);
+  saveSettings();
+});
+
+soundStartToggle.addEventListener('change', () => {
+  userSettings.sounds.start = soundStartToggle.checked;
+  saveSettings();
+});
+
+soundEndToggle.addEventListener('change', () => {
+  userSettings.sounds.end = soundEndToggle.checked;
+  saveSettings();
+});
+
+soundTickToggle.addEventListener('change', () => {
+  userSettings.sounds.tick = soundTickToggle.checked;
+  saveSettings();
+});
+
 // ============================================================
 // 初期化
 // ============================================================
 (async () => {
-  await fetchState();
+  loadSettings();
+  applyTheme(userSettings.theme);
+  syncSettingsControls();
+  await syncTimerSettings();
   await fetchStats();
 })();

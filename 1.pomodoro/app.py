@@ -9,7 +9,11 @@ create_app() ファクトリにより、テスト時に PomodoroTimer / StatsSer
 import os
 from flask import Flask, jsonify, render_template, request
 
-from pomodoro.timer import PomodoroTimer
+from pomodoro.timer import (
+    ALLOWED_BREAK_DURATIONS_MINUTES,
+    ALLOWED_WORK_DURATIONS_MINUTES,
+    PomodoroTimer,
+)
 from pomodoro.stats import JsonStatsRepository, StatsService
 
 
@@ -74,6 +78,31 @@ def create_app(timer: PomodoroTimer | None = None, stats_service: StatsService |
         timer.complete_session()
         return jsonify(timer.to_dict())
 
+    @_app.get("/api/settings")
+    def api_get_settings():
+        return jsonify({
+            "settings": timer.settings,
+            "options": {
+                "work_duration_minutes": list(ALLOWED_WORK_DURATIONS_MINUTES),
+                "break_duration_minutes": list(ALLOWED_BREAK_DURATIONS_MINUTES),
+            },
+        })
+
+    @_app.post("/api/settings")
+    def api_update_settings():
+        data = request.get_json(silent=True) or {}
+        work_duration = data.get("work_duration_minutes")
+        break_duration = data.get("break_duration_minutes")
+        try:
+            timer.set_durations(int(work_duration), int(break_duration))
+        except (TypeError, ValueError):
+            return jsonify({"error": "invalid settings"}), 400
+        timer.reset()
+        return jsonify({
+            "timer": timer.to_dict(),
+            "settings": timer.settings,
+        })
+
     # ---------------------------------------------------------------------------
     # 統計 API
     # ---------------------------------------------------------------------------
@@ -91,4 +120,3 @@ app = create_app()
 if __name__ == "__main__":
     debug = os.getenv("FLASK_DEBUG", "0").strip().lower() in {"1", "true", "yes", "on"}
     app.run(debug=debug)
-

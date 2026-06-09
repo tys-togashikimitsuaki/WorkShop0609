@@ -19,12 +19,20 @@
     </div>
 
     <!-- メインカード -->
-    <div class="card">
+    <div class="card" id="timerCard">
       <!-- ステータスラベル -->
       <div class="status-label" id="statusLabel">作業中</div>
 
       <!-- 円形プログレスリング -->
       <div class="ring-container">
+        <div class="focus-effects" id="focusEffects" aria-hidden="true">
+          <span class="particle particle-1"></span>
+          <span class="particle particle-2"></span>
+          <span class="particle particle-3"></span>
+          <span class="particle particle-4"></span>
+          <span class="ripple ripple-1"></span>
+          <span class="ripple ripple-2"></span>
+        </div>
         <svg class="ring-svg" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
           <!-- トラック -->
           <circle
@@ -102,6 +110,42 @@
             <div class="graph-item">
               <div class="graph-header"><span>月間平均集中</span><span id="monthlyAvg">0分</span></div>
             </div>
+          </div>
+        </div>
+        <!-- 設定 -->
+        <div class="settings-panel">
+          <div class="settings-title">設定</div>
+          <div class="settings-grid">
+            <label class="setting-item">
+              <span>作業時間</span>
+              <select id="workDurationSelect">
+                <option value="15">15分</option>
+                <option value="25" selected>25分</option>
+                <option value="35">35分</option>
+                <option value="45">45分</option>
+              </select>
+            </label>
+            <label class="setting-item">
+              <span>休憩時間</span>
+              <select id="breakDurationSelect">
+                <option value="5" selected>5分</option>
+                <option value="10">10分</option>
+                <option value="15">15分</option>
+              </select>
+            </label>
+            <label class="setting-item">
+              <span>テーマ</span>
+              <select id="themeSelect">
+                <option value="light" selected>ライト</option>
+                <option value="dark">ダーク</option>
+                <option value="focus">フォーカス</option>
+              </select>
+            </label>
+          </div>
+          <div class="sound-settings">
+            <label><input type="checkbox" id="soundStartToggle" checked /> 開始音</label>
+            <label><input type="checkbox" id="soundEndToggle" checked /> 終了音</label>
+            <label><input type="checkbox" id="soundTickToggle" /> tick音</label>
           </div>
         </div>
       </div>

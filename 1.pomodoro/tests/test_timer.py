@@ -7,6 +7,8 @@ clock_fn に固定値/インクリメント関数を渡すことで、
 
 import pytest
 from pomodoro.timer import (
+    ALLOWED_BREAK_DURATIONS_MINUTES,
+    ALLOWED_WORK_DURATIONS_MINUTES,
     PomodoroTimer,
     TimerMode,
     TimerState,
@@ -186,3 +188,33 @@ class TestSerialization:
         t = PomodoroTimer.from_dict(data)
         assert t.mode == TimerMode.BREAK
         assert t.remaining_seconds == 200
+
+
+# ---------------------------------------------------------------------------
+# settings
+# ---------------------------------------------------------------------------
+
+class TestSettings:
+    def test_set_durations_changes_work_and_break_lengths(self):
+        t = PomodoroTimer()
+        t.set_durations(work_duration_minutes=45, break_duration_minutes=15)
+        assert t.settings == {
+            "work_duration_minutes": 45,
+            "break_duration_minutes": 15,
+        }
+        t.reset()
+        assert t.remaining_seconds == 45 * 60
+        t.complete_session()
+        assert t.remaining_seconds == 15 * 60
+
+    def test_set_durations_rejects_invalid_work_duration(self):
+        t = PomodoroTimer()
+        invalid = max(ALLOWED_WORK_DURATIONS_MINUTES) + 1
+        with pytest.raises(ValueError):
+            t.set_durations(work_duration_minutes=invalid, break_duration_minutes=5)
+
+    def test_set_durations_rejects_invalid_break_duration(self):
+        t = PomodoroTimer()
+        invalid = max(ALLOWED_BREAK_DURATIONS_MINUTES) + 1
+        with pytest.raises(ValueError):
+            t.set_durations(work_duration_minutes=25, break_duration_minutes=invalid)

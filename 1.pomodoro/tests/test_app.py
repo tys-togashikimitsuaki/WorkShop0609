@@ -51,6 +51,16 @@ class TestIndexPage:
         res = client.get("/")
         assert "\u30dd\u30e2\u30c9\u30fc\u30ed\u30bf\u30a4\u30de\u30fc" in res.data.decode("utf-8")
 
+    def test_contains_focus_effect_container(self, client):
+        html = client.get("/").data.decode("utf-8")
+        assert 'id="timerCard"' in html
+        assert 'id="focusEffects"' in html
+
+    def test_contains_particle_and_ripple_elements(self, client):
+        html = client.get("/").data.decode("utf-8")
+        assert 'class="particle particle-1"' in html
+        assert 'class="ripple ripple-1"' in html
+
 
 # ---------------------------------------------------------------------------
 # GET /api/state
@@ -189,6 +199,37 @@ class TestApiComplete:
         client.post("/api/complete", json={"duration_seconds": 0})
         stats = stats_service.get_today_stats()
         assert stats["completed"] == 0
+
+
+# ---------------------------------------------------------------------------
+# /api/settings
+# ---------------------------------------------------------------------------
+
+class TestApiSettings:
+    def test_get_returns_current_settings_and_options(self, client):
+        data = client.get("/api/settings").get_json()
+        assert data["settings"]["work_duration_minutes"] == 25
+        assert data["settings"]["break_duration_minutes"] == 5
+        assert data["options"]["work_duration_minutes"] == [15, 25, 35, 45]
+        assert data["options"]["break_duration_minutes"] == [5, 10, 15]
+
+    def test_post_updates_timer_durations_and_resets(self, client):
+        client.post("/api/start")
+        data = client.post("/api/settings", json={
+            "work_duration_minutes": 35,
+            "break_duration_minutes": 10,
+        }).get_json()
+        assert data["settings"]["work_duration_minutes"] == 35
+        assert data["settings"]["break_duration_minutes"] == 10
+        assert data["timer"]["state"] == "idle"
+        assert data["timer"]["remaining_seconds"] == 35 * 60
+
+    def test_post_with_invalid_settings_returns_400(self, client):
+        res = client.post("/api/settings", json={
+            "work_duration_minutes": 20,
+            "break_duration_minutes": 10,
+        })
+        assert res.status_code == 400
 
 
 # ---------------------------------------------------------------------------

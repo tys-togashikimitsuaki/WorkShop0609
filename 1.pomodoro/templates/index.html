@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ポモドーロタイマー</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- タイトルバー -->
+    <div class="titlebar">
+      <span class="titlebar-title">ポモドーロタイマー</span>
+      <div class="titlebar-controls">
+        <span class="ctrl-btn ctrl-min">&#x2212;</span>
+        <span class="ctrl-btn ctrl-max">&#x25A1;</span>
+        <span class="ctrl-btn ctrl-close">&#x2715;</span>
+      </div>
+    </div>
+
+    <!-- メインカード -->
+    <div class="card">
+      <!-- ステータスラベル -->
+      <div class="status-label" id="statusLabel">作業中</div>
+
+      <!-- 円形プログレスリング -->
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- トラック -->
+          <circle
+            class="ring-track"
+            cx="110" cy="110" r="96"
+            fill="none"
+            stroke-width="12"
+          />
+          <!-- 進捗 -->
+          <circle
+            class="ring-progress"
+            id="ringProgress"
+            cx="110" cy="110" r="96"
+            fill="none"
+            stroke-width="12"
+            stroke-linecap="round"
+            transform="rotate(-90 110 110)"
+          />
+        </svg>
+        <!-- 残り時間 -->
+        <div class="time-display" id="timeDisplay">25:00</div>
+      </div>
+
+      <!-- ボタン -->
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startPauseBtn">開始</button>
+        <button class="btn btn-outline" id="resetBtn">リセット</button>
+      </div>
+
+      <!-- 今日の進捗 -->
+      <div class="stats-panel">
+        <div class="stats-title">今日の進捗</div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <span class="stat-value" id="completedCount">0</span>
+            <span class="stat-unit">完了</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value stat-focus" id="focusLabel">0分</span>
+            <span class="stat-unit">集中時間</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -14,6 +14,9 @@
 // ============================================================
 const RING_RADIUS = 96;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS; // ≈ 603.2
+const WORK_RING_COLOR_BLUE = [59, 130, 246];
+const WORK_RING_COLOR_YELLOW = [250, 204, 21];
+const WORK_RING_COLOR_RED = [239, 68, 68];
 
 // ============================================================
 // DOM 参照
@@ -55,14 +58,11 @@ function interpolateColor(from, to, t) {
 }
 
 function getWorkRingColor(progress) {
-  const blue = [59, 130, 246];
-  const yellow = [250, 204, 21];
-  const red = [239, 68, 68];
   const clamped = Math.max(0, Math.min(1, progress));
 
   const rgb = clamped <= 0.5
-    ? interpolateColor(blue, yellow, clamped * 2)
-    : interpolateColor(yellow, red, (clamped - 0.5) * 2);
+    ? interpolateColor(WORK_RING_COLOR_BLUE, WORK_RING_COLOR_YELLOW, clamped * 2)
+    : interpolateColor(WORK_RING_COLOR_YELLOW, WORK_RING_COLOR_RED, (clamped - 0.5) * 2);
 
   return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 }

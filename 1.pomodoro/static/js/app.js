@@ -150,8 +150,9 @@ function loadSettings() {
         tick: parsed.sounds?.tick === true,
       },
     };
-  } catch (_) {
+  } catch (err) {
     // 破損時はデフォルト値を使用
+    console.warn('保存済み設定の読み込みに失敗しました:', err);
   }
 }
 
@@ -206,7 +207,7 @@ function playTones(tones) {
       osc.stop(ctx.currentTime + start + dur + 0.05);
     });
   } catch (err) {
-    // Web Audio 非対応環境では無視
+    // Web Audio 非対応環境や再生失敗時は警告のみ出して継続する
     console.warn('サウンド再生に失敗しました:', err);
   }
 }

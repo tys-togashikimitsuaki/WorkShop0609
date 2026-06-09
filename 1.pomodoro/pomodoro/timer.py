@@ -26,6 +26,8 @@ class TimerState(str, Enum):
 
 WORK_DURATION = 25 * 60   # 1500 秒
 BREAK_DURATION = 5 * 60   # 300 秒
+ALLOWED_WORK_DURATIONS_MINUTES = (15, 25, 35, 45)
+ALLOWED_BREAK_DURATIONS_MINUTES = (5, 10, 15)
 
 
 class PomodoroTimer:
@@ -38,11 +40,12 @@ class PomodoroTimer:
 
     def __init__(self, clock_fn: Callable[[], float] = time.time) -> None:
         self._clock_fn = clock_fn
+        self._work_duration = WORK_DURATION
+        self._break_duration = BREAK_DURATION
         self._mode = TimerMode.WORK
         self._state = TimerState.IDLE
-        self._remaining = WORK_DURATION
         self._start_time: float | None = None
-        self._paused_remaining: int = WORK_DURATION
+        self._paused_remaining: int = self._work_duration
 
     # ------------------------------------------------------------------
     # Properties
@@ -66,7 +69,14 @@ class PomodoroTimer:
 
     @property
     def total_duration(self) -> int:
-        return WORK_DURATION if self._mode == TimerMode.WORK else BREAK_DURATION
+        return self._work_duration if self._mode == TimerMode.WORK else self._break_duration
+
+    @property
+    def settings(self) -> dict[str, int]:
+        return {
+            "work_duration_minutes": self._work_duration // 60,
+            "break_duration_minutes": self._break_duration // 60,
+        }
 
     # ------------------------------------------------------------------
     # Commands
@@ -92,7 +102,7 @@ class PomodoroTimer:
         self._mode = TimerMode.WORK
         self._state = TimerState.IDLE
         self._start_time = None
-        self._paused_remaining = WORK_DURATION
+        self._paused_remaining = self._work_duration
 
     def complete_session(self) -> TimerMode:
         """現在のセッションを完了し、次のモードに切り替える。
@@ -102,13 +112,23 @@ class PomodoroTimer:
         """
         if self._mode == TimerMode.WORK:
             self._mode = TimerMode.BREAK
-            self._paused_remaining = BREAK_DURATION
+            self._paused_remaining = self._break_duration
         else:
             self._mode = TimerMode.WORK
-            self._paused_remaining = WORK_DURATION
+            self._paused_remaining = self._work_duration
         self._state = TimerState.IDLE
         self._start_time = None
         return self._mode
+
+    def set_durations(self, work_duration_minutes: int, break_duration_minutes: int) -> None:
+        """作業/休憩時間を更新する。"""
+        if work_duration_minutes not in ALLOWED_WORK_DURATIONS_MINUTES:
+            raise ValueError("invalid work duration")
+        if break_duration_minutes not in ALLOWED_BREAK_DURATIONS_MINUTES:
+            raise ValueError("invalid break duration")
+
+        self._work_duration = work_duration_minutes * 60
+        self._break_duration = break_duration_minutes * 60
 
     # ------------------------------------------------------------------
     # Serialization

@@ -113,6 +113,8 @@ class StatsService:
 
     XP_PER_WORK_SESSION = 100
     LEVEL_STEP_XP = 500
+    WEEKLY_TARGET_SESSIONS = 10
+    MONTHLY_TARGET_SESSIONS = 40
 
     def __init__(self, repository: StatsRepository, today_fn: Callable[[], date] = date.today) -> None:
         self._repo = repository
@@ -173,9 +175,9 @@ class StatsService:
                 "id": "weekly_10",
                 "name": "週10回",
                 "description": "1週間で10回の作業セッションを完了",
-                "earned": weekly_completed >= 10,
-                "progress": min(weekly_completed, 10),
-                "target": 10,
+                "earned": weekly_completed >= self.WEEKLY_TARGET_SESSIONS,
+                "progress": min(weekly_completed, self.WEEKLY_TARGET_SESSIONS),
+                "target": self.WEEKLY_TARGET_SESSIONS,
             },
         ]
 
@@ -187,20 +189,20 @@ class StatsService:
                 "xp": xp,
                 "level": level,
                 "xp_in_level": xp_in_level,
-                "xp_to_next_level": self.LEVEL_STEP_XP - xp_in_level if xp_in_level > 0 else self.LEVEL_STEP_XP,
+                "xp_to_next_level": (self.LEVEL_STEP_XP - xp_in_level) % self.LEVEL_STEP_XP,
                 "streak_days": streak_days,
                 "badges": badges,
                 "earned_badges": len([b for b in badges if b["earned"]]),
                 "weekly": {
                     "sessions_completed": weekly_completed,
                     "focus_seconds": weekly_focus_seconds,
-                    "completion_rate": round((weekly_completed / 10) * 100, 1),
+                    "completion_rate": round((weekly_completed / self.WEEKLY_TARGET_SESSIONS) * 100, 1),
                     "average_focus_seconds": weekly_focus_seconds // weekly_completed if weekly_completed > 0 else 0,
                 },
                 "monthly": {
                     "sessions_completed": monthly_completed,
                     "focus_seconds": monthly_focus_seconds,
-                    "completion_rate": round((monthly_completed / 40) * 100, 1),
+                    "completion_rate": round((monthly_completed / self.MONTHLY_TARGET_SESSIONS) * 100, 1),
                     "average_focus_seconds": monthly_focus_seconds // monthly_completed if monthly_completed > 0 else 0,
                 },
             },

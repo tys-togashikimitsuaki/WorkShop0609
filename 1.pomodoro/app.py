@@ -89,5 +89,6 @@ def create_app(timer: PomodoroTimer | None = None, stats_service: StatsService |
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug = os.getenv("FLASK_DEBUG", "0").strip().lower() in {"1", "true", "yes", "on"}
+    app.run(debug=debug)
 

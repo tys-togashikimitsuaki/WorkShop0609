@@ -29,6 +29,16 @@ const startPauseBtn  = document.getElementById('startPauseBtn');
 const resetBtn       = document.getElementById('resetBtn');
 const completedCount = document.getElementById('completedCount');
 const focusLabel     = document.getElementById('focusLabel');
+const levelValue     = document.getElementById('levelValue');
+const xpValue        = document.getElementById('xpValue');
+const streakValue    = document.getElementById('streakValue');
+const badgeList      = document.getElementById('badgeList');
+const weeklyRate     = document.getElementById('weeklyRate');
+const weeklyRateFill = document.getElementById('weeklyRateFill');
+const weeklyAvg      = document.getElementById('weeklyAvg');
+const monthlyRate    = document.getElementById('monthlyRate');
+const monthlyRateFill = document.getElementById('monthlyRateFill');
+const monthlyAvg     = document.getElementById('monthlyAvg');
 const workDurationSelect = document.getElementById('workDurationSelect');
 const breakDurationSelect = document.getElementById('breakDurationSelect');
 const themeSelect = document.getElementById('themeSelect');
@@ -116,6 +126,27 @@ function updateUI(data) {
 function updateStats(data) {
   completedCount.textContent = data.completed ?? 0;
   focusLabel.textContent     = data.focus_label ?? '0分';
+  const gamification = data.gamification ?? {};
+  levelValue.textContent = `Lv.${gamification.level ?? 1}`;
+  xpValue.textContent = `${gamification.xp ?? 0} XP`;
+  streakValue.textContent = `${gamification.streak_days ?? 0}日`;
+
+  const badges = gamification.badges ?? [];
+  badgeList.innerHTML = badges.map((badge) => {
+    const earnedClass = badge.earned ? ' badge-earned' : '';
+    return `<div class="badge-item${earnedClass}">${badge.name} (${badge.progress}/${badge.target})</div>`;
+  }).join('');
+
+  const weekly = gamification.weekly ?? {};
+  const monthly = gamification.monthly ?? {};
+  const weeklyCompletionRate = weekly.completion_rate ?? 0;
+  const monthlyCompletionRate = monthly.completion_rate ?? 0;
+  weeklyRate.textContent = `${Number(weeklyCompletionRate).toFixed(1)}%`;
+  weeklyRateFill.style.width = `${weeklyCompletionRate}%`;
+  monthlyRate.textContent = `${Number(monthlyCompletionRate).toFixed(1)}%`;
+  monthlyRateFill.style.width = `${monthlyCompletionRate}%`;
+  weeklyAvg.textContent = `${Math.floor((weekly.average_focus_seconds ?? 0) / 60)}分`;
+  monthlyAvg.textContent = `${Math.floor((monthly.average_focus_seconds ?? 0) / 60)}分`;
 }
 
 // ============================================================

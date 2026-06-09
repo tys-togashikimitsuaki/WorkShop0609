@@ -248,7 +248,7 @@ class TestApiStats:
 
     def test_stats_response_contains_required_keys(self, client):
         data = client.get("/api/stats").get_json()
-        assert set(data.keys()) == {"completed", "focus_seconds", "focus_label"}
+        assert set(data.keys()) == {"completed", "focus_seconds", "focus_label", "gamification"}
 
     def test_stats_update_after_complete(self, client):
         client.post("/api/complete", json={"duration_seconds": 1500})
@@ -256,6 +256,21 @@ class TestApiStats:
         assert data["completed"] == 1
         assert data["focus_seconds"] == 1500
         assert data["focus_label"] == "25分"
+
+    def test_stats_include_gamification_fields(self, client):
+        data = client.get("/api/stats").get_json()
+        gamification = data["gamification"]
+        assert set(gamification.keys()) == {
+            "xp",
+            "level",
+            "xp_in_level",
+            "xp_to_next_level",
+            "streak_days",
+            "badges",
+            "earned_badges",
+            "weekly",
+            "monthly",
+        }
 
     def test_stats_accumulate_across_multiple_sessions(self, client):
         client.post("/api/complete", json={"duration_seconds": 1500})  # WORK → BREAK

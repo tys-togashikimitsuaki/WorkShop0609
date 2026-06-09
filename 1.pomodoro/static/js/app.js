@@ -105,9 +105,9 @@ function updateStats(data) {
   const monthly = gamification.monthly ?? {};
   const weeklyCompletionRate = weekly.completion_rate ?? 0;
   const monthlyCompletionRate = monthly.completion_rate ?? 0;
-  weeklyRate.textContent = `${weeklyCompletionRate}%`;
+  weeklyRate.textContent = `${Number(weeklyCompletionRate).toFixed(1)}%`;
   weeklyRateFill.style.width = `${weeklyCompletionRate}%`;
-  monthlyRate.textContent = `${monthlyCompletionRate}%`;
+  monthlyRate.textContent = `${Number(monthlyCompletionRate).toFixed(1)}%`;
   monthlyRateFill.style.width = `${monthlyCompletionRate}%`;
   weeklyAvg.textContent = `${Math.floor((weekly.average_focus_seconds ?? 0) / 60)}分`;
   monthlyAvg.textContent = `${Math.floor((monthly.average_focus_seconds ?? 0) / 60)}分`;

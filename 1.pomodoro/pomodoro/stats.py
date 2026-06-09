@@ -189,7 +189,7 @@ class StatsService:
                 "xp": xp,
                 "level": level,
                 "xp_in_level": xp_in_level,
-                "xp_to_next_level": 0 if xp_in_level == 0 else self.LEVEL_STEP_XP - xp_in_level,
+                "xp_to_next_level": self.LEVEL_STEP_XP - xp_in_level,
                 "streak_days": streak_days,
                 "badges": badges,
                 "earned_badges": len([b for b in badges if b["earned"]]),

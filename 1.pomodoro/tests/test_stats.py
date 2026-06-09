@@ -117,14 +117,14 @@ class TestGamification:
         assert stats["gamification"]["xp"] == 600
         assert stats["gamification"]["level"] == 2
 
-    def test_xp_to_next_level_is_zero_on_exact_level_up(self):
+    def test_xp_to_next_level_resets_after_exact_level_up(self):
         repo = InMemoryStatsRepository()
         for _ in range(5):
             repo.record_session(date(2026, 1, 3), 1500, "work")
         service = StatsService(repo, today_fn=lambda: date(2026, 1, 3))
         stats = service.get_today_stats()
         assert stats["gamification"]["xp"] == 500
-        assert stats["gamification"]["xp_to_next_level"] == 0
+        assert stats["gamification"]["xp_to_next_level"] == 500
 
     def test_streak_counts_consecutive_days(self):
         repo = InMemoryStatsRepository()

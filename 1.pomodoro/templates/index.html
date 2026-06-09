@@ -67,6 +67,43 @@
             <span class="stat-unit">集中時間</span>
           </div>
         </div>
+
+        <div class="gamification-panel">
+          <div class="stats-title">ゲーミフィケーション</div>
+          <div class="gamification-row">
+            <div class="gamification-item">
+              <span class="gamification-label">レベル</span>
+              <span class="gamification-value" id="levelValue">Lv.1</span>
+            </div>
+            <div class="gamification-item">
+              <span class="gamification-label">XP</span>
+              <span class="gamification-value" id="xpValue">0</span>
+            </div>
+            <div class="gamification-item">
+              <span class="gamification-label">ストリーク</span>
+              <span class="gamification-value" id="streakValue">0日</span>
+            </div>
+          </div>
+          <div class="stats-title">実績バッジ</div>
+          <div class="badge-list" id="badgeList"></div>
+          <div class="stats-title">週間・月間統計</div>
+          <div class="graph-list">
+            <div class="graph-item">
+              <div class="graph-header"><span>週間完了率</span><span id="weeklyRate">0%</span></div>
+              <div class="graph-track"><div class="graph-fill" id="weeklyRateFill"></div></div>
+            </div>
+            <div class="graph-item">
+              <div class="graph-header"><span>週間平均集中</span><span id="weeklyAvg">0分</span></div>
+            </div>
+            <div class="graph-item">
+              <div class="graph-header"><span>月間完了率</span><span id="monthlyRate">0%</span></div>
+              <div class="graph-track"><div class="graph-fill" id="monthlyRateFill"></div></div>
+            </div>
+            <div class="graph-item">
+              <div class="graph-header"><span>月間平均集中</span><span id="monthlyAvg">0分</span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

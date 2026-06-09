@@ -5,6 +5,7 @@ InMemoryStatsRepository を注入することで、ファイルI/O 不要でテ�
 """
 
 import pytest
+from datetime import date
 from pomodoro.stats import InMemoryStatsRepository, StatsService
 
 
@@ -99,9 +100,49 @@ class TestDateIsolation:
         assert stats_day2["completed"] == 1
 
     def test_no_cross_date_contamination(self):
-        from datetime import date
         repo = InMemoryStatsRepository()
         repo.record_session(date(2026, 1, 1), 1500, "work")
         stats = repo.get_stats(date(2026, 1, 2))
         assert stats["completed"] == 0
         assert stats["focus_seconds"] == 0
+
+
+class TestGamification:
+    def test_xp_and_level(self):
+        repo = InMemoryStatsRepository()
+        for _ in range(6):
+            repo.record_session(date(2026, 1, 3), 1500, "work")
+        service = StatsService(repo, today_fn=lambda: date(2026, 1, 3))
+        stats = service.get_today_stats()
+        assert stats["gamification"]["xp"] == 600
+        assert stats["gamification"]["level"] == 2
+
+    def test_streak_counts_consecutive_days(self):
+        repo = InMemoryStatsRepository()
+        repo.record_session(date(2026, 1, 1), 1500, "work")
+        repo.record_session(date(2026, 1, 2), 1500, "work")
+        repo.record_session(date(2026, 1, 3), 1500, "work")
+        service = StatsService(repo, today_fn=lambda: date(2026, 1, 3))
+        stats = service.get_today_stats()
+        assert stats["gamification"]["streak_days"] == 3
+
+    def test_weekly_and_monthly_aggregates(self):
+        repo = InMemoryStatsRepository()
+        for day in range(1, 8):
+            repo.record_session(date(2026, 1, day), 1500, "work")
+        service = StatsService(repo, today_fn=lambda: date(2026, 1, 7))
+        stats = service.get_today_stats()
+        assert stats["gamification"]["weekly"]["sessions_completed"] == 7
+        assert stats["gamification"]["monthly"]["sessions_completed"] == 7
+
+    def test_badge_progress_reflects_streak_and_weekly_sessions(self):
+        repo = InMemoryStatsRepository()
+        for day in range(1, 4):
+            repo.record_session(date(2026, 1, day), 1500, "work")
+        for _ in range(7):
+            repo.record_session(date(2026, 1, 3), 1500, "work")
+        service = StatsService(repo, today_fn=lambda: date(2026, 1, 3))
+        stats = service.get_today_stats()
+        badges = {b["id"]: b for b in stats["gamification"]["badges"]}
+        assert badges["streak_3"]["earned"] is True
+        assert badges["weekly_10"]["earned"] is True

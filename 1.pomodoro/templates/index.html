@@ -19,12 +19,20 @@
     </div>
 
     <!-- メインカード -->
-    <div class="card">
+    <div class="card" id="timerCard">
       <!-- ステータスラベル -->
       <div class="status-label" id="statusLabel">作業中</div>
 
       <!-- 円形プログレスリング -->
       <div class="ring-container">
+        <div class="focus-effects" id="focusEffects" aria-hidden="true">
+          <span class="particle particle-1"></span>
+          <span class="particle particle-2"></span>
+          <span class="particle particle-3"></span>
+          <span class="particle particle-4"></span>
+          <span class="ripple ripple-1"></span>
+          <span class="ripple ripple-2"></span>
+        </div>
         <svg class="ring-svg" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
           <!-- トラック -->
           <circle

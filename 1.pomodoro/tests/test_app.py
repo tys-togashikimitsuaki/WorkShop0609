@@ -51,6 +51,16 @@ class TestIndexPage:
         res = client.get("/")
         assert "\u30dd\u30e2\u30c9\u30fc\u30ed\u30bf\u30a4\u30de\u30fc" in res.data.decode("utf-8")
 
+    def test_contains_focus_effect_container(self, client):
+        html = client.get("/").data.decode("utf-8")
+        assert 'id="timerCard"' in html
+        assert 'id="focusEffects"' in html
+
+    def test_contains_particle_and_ripple_elements(self, client):
+        html = client.get("/").data.decode("utf-8")
+        assert 'class="particle particle-1"' in html
+        assert 'class="ripple ripple-1"' in html
+
 
 # ---------------------------------------------------------------------------
 # GET /api/state

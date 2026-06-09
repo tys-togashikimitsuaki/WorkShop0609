@@ -108,6 +108,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .ring-svg {
@@ -124,7 +125,65 @@ body {
 
 .ring-progress {
   stroke: #6B63D5;
-  transition: stroke-dashoffset 0.5s linear;
+  transition: stroke-dashoffset 0.9s linear, stroke 0.45s ease;
+}
+
+.focus-effects {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.card.focus-mode .focus-effects {
+  opacity: 1;
+}
+
+.particle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.32);
+  animation: particleDrift 4s ease-in-out infinite;
+}
+
+.particle-1 { top: 10%; left: 12%; animation-delay: 0s; }
+.particle-2 { top: 20%; right: 16%; animation-delay: 1s; }
+.particle-3 { bottom: 12%; left: 18%; animation-delay: 1.8s; }
+.particle-4 { bottom: 18%; right: 10%; animation-delay: 2.6s; }
+
+.ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  transform: translate(-50%, -50%) scale(0.85);
+  animation: ripplePulse 3.2s ease-out infinite;
+}
+
+.ripple-2 {
+  animation-delay: 1.6s;
+}
+
+@keyframes particleDrift {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+  50% { transform: translateY(-12px) scale(1.25); opacity: 0.7; }
+}
+
+@keyframes ripplePulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 0;
+  }
 }
 
 .time-display {

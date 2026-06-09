@@ -21,6 +21,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS; // ≈ 603.2
 const statusLabel    = document.getElementById('statusLabel');
 const timeDisplay    = document.getElementById('timeDisplay');
 const ringProgress   = document.getElementById('ringProgress');
+const timerCard      = document.getElementById('timerCard');
 const startPauseBtn  = document.getElementById('startPauseBtn');
 const resetBtn       = document.getElementById('resetBtn');
 const completedCount = document.getElementById('completedCount');
@@ -49,6 +50,30 @@ ringProgress.style.strokeDashoffset = 0;
 // ============================================================
 // UI 更新
 // ============================================================
+function interpolateColor(from, to, t) {
+  return from.map((value, i) => Math.round(value + (to[i] - value) * t));
+}
+
+function getWorkRingColor(progress) {
+  const blue = [59, 130, 246];
+  const yellow = [250, 204, 21];
+  const red = [239, 68, 68];
+  const clamped = Math.max(0, Math.min(1, progress));
+
+  const rgb = clamped <= 0.5
+    ? interpolateColor(blue, yellow, clamped * 2)
+    : interpolateColor(yellow, red, (clamped - 0.5) * 2);
+
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+}
+
+function updateRingVisuals(remainingSeconds, totalDuration, mode) {
+  const ratio = totalDuration > 0 ? remainingSeconds / totalDuration : 0;
+  const progress = 1 - ratio;
+  ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * progress;
+  ringProgress.style.stroke = mode === 'work' ? getWorkRingColor(progress) : '#56C8A0';
+}
+
 function updateUI(data) {
   timerState = data;
 
@@ -60,14 +85,8 @@ function updateUI(data) {
   // ステータスラベル
   statusLabel.textContent = data.mode === 'work' ? '作業中' : '休憩中';
 
-  // リングカラー（作業:パープル / 休憩:グリーン系）
-  ringProgress.style.stroke = data.mode === 'work' ? '#6B63D5' : '#56C8A0';
-
-  // リング進捗
-  const ratio = data.total_duration > 0
-    ? data.remaining_seconds / data.total_duration
-    : 0;
-  ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - ratio);
+  updateRingVisuals(data.remaining_seconds, data.total_duration, data.mode);
+  timerCard.classList.toggle('focus-mode', data.mode === 'work' && data.state === 'running');
 
   // ボタンラベル
   if (data.state === 'running') {
@@ -211,10 +230,7 @@ function tick() {
   const s = timerState.remaining_seconds % 60;
   timeDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-  const ratio = timerState.total_duration > 0
-    ? timerState.remaining_seconds / timerState.total_duration
-    : 0;
-  ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - ratio);
+  updateRingVisuals(timerState.remaining_seconds, timerState.total_duration, timerState.mode);
 }
 
 // ============================================================

@@ -144,6 +144,14 @@ class TestGamification:
         assert stats["gamification"]["weekly"]["sessions_completed"] == 7
         assert stats["gamification"]["monthly"]["sessions_completed"] == 7
 
+    def test_completion_rate_is_capped_at_100_percent(self):
+        repo = InMemoryStatsRepository()
+        for _ in range(15):
+            repo.record_session(date(2026, 1, 7), 1500, "work")
+        service = StatsService(repo, today_fn=lambda: date(2026, 1, 7))
+        stats = service.get_today_stats()
+        assert stats["gamification"]["weekly"]["completion_rate"] == 100.0
+
     def test_badge_progress_reflects_streak_and_weekly_sessions(self):
         repo = InMemoryStatsRepository()
         for day in range(1, 4):

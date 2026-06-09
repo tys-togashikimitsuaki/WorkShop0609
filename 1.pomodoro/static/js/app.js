@@ -103,9 +103,8 @@ function updateStats(data) {
 
   const weekly = gamification.weekly ?? {};
   const monthly = gamification.monthly ?? {};
-  const clampRate = (rate) => Math.min(100, Math.max(0, rate ?? 0));
-  const weeklyCompletionRate = clampRate(weekly.completion_rate);
-  const monthlyCompletionRate = clampRate(monthly.completion_rate);
+  const weeklyCompletionRate = weekly.completion_rate ?? 0;
+  const monthlyCompletionRate = monthly.completion_rate ?? 0;
   weeklyRate.textContent = `${weeklyCompletionRate}%`;
   weeklyRateFill.style.width = `${weeklyCompletionRate}%`;
   monthlyRate.textContent = `${monthlyCompletionRate}%`;
